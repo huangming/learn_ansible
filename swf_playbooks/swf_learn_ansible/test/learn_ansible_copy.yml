@@ -1,0 +1,8 @@
+---
+- hosts: all
+
+  tasks:
+    - name: copy file and dest path not exists
+      copy:
+        src: "{{ lookup('env','HOME') + '/project/ansible/learn_ansible/test.sh' }}"
+        dest: /tmp/test/

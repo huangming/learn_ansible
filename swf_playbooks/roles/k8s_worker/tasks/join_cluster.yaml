@@ -1,0 +1,21 @@
+# - name: Exisitng Node Check
+#   stat:
+#     path: /etc/kubernetes/kubelet.conf
+#   register: statResult
+
+# - name: Join Cluster
+#   command: kubeadm join --token {{hostvars['master']['nodeJoinToken']}} {{ hostvars['master']['ansible_host'] }}:6443 --discovery-token-ca-cert-hash sha256:{{hostvars['master']['caCertHash']}}
+#   when: statResult.stat.exists == false
+- name: create worker join command
+  shell: |
+    kubeadm token create --print-join-command | grep kubeadm
+  register: join_master_command
+  delegate_to: "{{ groups['master'][0] }}"
+
+- name: Show Join Cluster Command
+  debug: var=join_master_command.stdout verbosity=0
+
+- name: Join Cluster
+  command: "{{ join_master_command.stdout }}"
+  when: join_master_command.stdout.find('kubeadm join')!=-1
+

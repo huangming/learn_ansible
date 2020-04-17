@@ -1,0 +1,33 @@
+---
+- hosts: worker
+  become: yes
+  vars:
+    images:
+        - { path: /home/hm/project/docker/nginx-test/,file: my-nginx-alpine-v1.tar, name: "my-nginx",tag: v1 }
+        - { path: /home/hm/project/docker/nginx-test/,file: my-nginx-alpine-v2.tar, name: "my-nginx",tag: v2 }
+        - { path: /home/hm/project/docker/,file: busybox.tar, name: "busybox",tag: last }
+    images_dest_path: "/root/images"
+
+  tasks:
+    - name: create need home directory
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ images_dest_path }}"
+      ignore_errors: True
+
+    - name: copy images file
+      copy:
+        src: "{{ item.path }}/{{ item.file }}"
+        dest: "{{ images_dest_path }}"
+        mode: 0644
+      with_items:
+        - "{{ images }}"
+
+    - name: load images
+      shell: |
+        docker load --input {{ images_dest_path }}/{{ item.file }}
+      with_items:
+        - "{{ images }}"
+

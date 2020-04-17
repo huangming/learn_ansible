@@ -1,0 +1,3 @@
+- name: test debug hello
+  debug:
+    msg: hello world {{ common_external_port_ranges }}

@@ -1,0 +1,103 @@
+- name: Install Docker Deps
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+
+- name: Add Docker Repo
+  shell: |
+    yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+    exit 0
+  args:
+    executable: /bin/bash
+
+- name: Install Docker CE
+  yum:
+    name: docker-ce
+    state: latest
+
+- name: Start Docker and Enabled Docker Auto Start
+  systemd:
+    state: started
+    enabled: yes
+    name: 'docker'
+
+- name: Config Docker
+  copy: src=daemon.json dest=/etc/docker/daemon.json
+
+- name: Add Kubernetes Repo
+  yum_repository:
+    name: kubernetes
+    description: Kubernetes YUM repo
+    baseurl: https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64 
+    enabled: yes
+    gpgcheck: yes
+    repo_gpgcheck: yes
+    gpgkey: https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg 
+    state: present
+    # exclude: kube*
+    
+- name: Install Kubernetes
+  yum:
+    name: ['kubelet','kubeadm','kubectl']
+    disable_excludes: all
+  register: task_result
+
+- name: Add Kernel Module Version3
+  copy: 
+    src: ipvs_v3.modules 
+    dest: /etc/sysconfig/modules/ipvs.modules
+    backup: yes
+    mode: 0755
+  when: ansible_kernel is version('4','<')
+
+- name: Add Kernel Module Version4
+  copy: 
+    src: ipvs_v4.modules 
+    dest: /etc/sysconfig/modules/ipvs.modules
+    backup: yes
+    mode: 0755
+  when: ansible_kernel is version('4','>=')
+
+- name: Active Kernel Module
+  shell: |
+    bash /etc/sysconfig/modules/ipvs.modules
+    exit 0
+
+- name: set net.bridge.bridge-nf-call-iptables="1"
+  shell: |
+    sysctl -w net.bridge.bridge-nf-call-iptables="1"
+    exit 0
+
+- name: set net.bridge.bridge-nf-call-iptables="1" in file
+  copy: 
+    src: k8s.conf
+    dest: /etc/sysctl.d/k8s.conf
+    backup: yes
+    mode: 0755
+
+- name: sysctl --system
+  shell: sysctl --system 
+
+- name: Start and Enable kubernetes service
+  systemd:
+    state: started
+    enabled: yes
+    name: 'kubelet'
+
+# - name: Reboot System
+#   shell: "sleep 5 && reboot"
+#   async: 1
+#   poll: 0
+#   when: task_result is changed
+
+# - name: Return Async Login After Reboot
+#   wait_for_connection:
+#     connection_timeout: 20
+#     sleep: 5
+#     delay: 5
+#     timeout: 300
+#   when: task_result is changed

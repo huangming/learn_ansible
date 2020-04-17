@@ -1,0 +1,22 @@
+- name: kubeadm init
+  shell: |
+    kubeadm init \
+    --apiserver-advertise-address=192.101.1.101 \
+    --image-repository registry.aliyuncs.com/google_containers \
+    --kubernetes-version v1.17.0 \
+    --service-cidr=192.101.1.0/16 \
+    --pod-network-cidr=10.244.0.0/16 > kubeadm-init.log
+
+- name: after kubeadm init: $HOME/.kube/config
+  shell: |
+    mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+- name: install flannel
+  shell: |
+    wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    sed -i 's@quay.io@quay.azk8s.cn@g' kube-flannel.yml
+    kubectl apply -f kube-flannel.yml
+    exit 0
+

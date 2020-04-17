@@ -1,0 +1,22 @@
+[worker]
+virtual-CentOS-worker102
+virtual-CentOS-worker103
+
+[worker:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="******"
+
+[master]
+hm-t450 ansible_connection=local
+
+[master:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="******"
+
+[base]
+virtual-RedHat72-base10
+
+[base:vars]
+ansible_ssh_user="root"
+ansible_ssh_pass="******"
+

@@ -1,0 +1,3 @@
+- include: test.yaml
+- include: system_settings.yaml
+- include: packages_install.yaml

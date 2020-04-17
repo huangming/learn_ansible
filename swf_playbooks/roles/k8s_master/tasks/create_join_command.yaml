@@ -1,0 +1,7 @@
+- name: create worker join command
+  shell: |
+    kubeadm token create --print-join-command | grep kubeadm
+  register: join_master_command
+
+- name: show
+  debug: var=join_master_command.stdout verbosity=0

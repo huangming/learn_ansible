@@ -1,0 +1,6 @@
+---
+- hosts: all
+
+  tasks:
+    - name: test hosts vars
+      debug: msg="The Variable 'test_var' is {{ test_var }}"
